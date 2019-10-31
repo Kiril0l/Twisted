@@ -11,7 +11,11 @@ class Chat(LineReceiver):
         self.state = "GETNAME"
 
     def connectionMade(self):    #метод вызывается 1 раз при установки соединени
-        self.sendLine("What's your name?".encode("utf-8"))
+        data = {
+            "status": "OK",
+            "message": "What's your name?"
+        }
+        self.sendLine(json.dumps(data).encode("utf-8"))
 
     def lineReceived(self, line):  #обрабатывает все поступившые данные
         if self.state == "GETNAME":
@@ -34,7 +38,7 @@ class Chat(LineReceiver):
         response = json.dumps(
             {
                 "status": "OK",
-                "message": f"Welcome{data['login']}""
+                "message": f"Welcome{data['login']}"
             }
         )
         self.sendLine(response.encode("utf-8"))
