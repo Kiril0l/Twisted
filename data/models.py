@@ -11,10 +11,10 @@ class User(peewee.Model):
         unique=True
     )
     hash_pass = peewee.CharField(
-        max_length = 256
+        max_length=256
     )
     last_login = peewee.DateTimeField(
-        default = datetime.now()
+        default=datetime.now()
     )
 
     class Meta:
@@ -24,28 +24,30 @@ class User(peewee.Model):
 
 class Chat(peewee.Model):
     name = peewee.CharField(
-        max_length = 20,
+        max_length=20,
         unique=True
     )
     user = peewee.ForeignKeyField(
         User,
-        backref = "chats"
+        backref="chats"
     )
+
     class Meta:
         database = db
-        table_name ="chats"
+        table_name = "chats"
+
 
 class Message(peewee.Model):
     text = peewee.TextField()
     user = peewee.ForeignKeyField(
-        User,  #получает ид юсера из табл юсер и связывает
-        backref="messages"           #виртуальное поле,кот будет в юсер
+        User,  # получает ид юсера из табл юсер и связывает
+        backref="messages"  # виртуальное поле,кот будет в юсер
     )
     chat = peewee.ForeignKeyField(
         Chat,
         backref="messages"
     )
-    create= peewee.DateTimeField(
+    create = peewee.DateTimeField(
         default=datetime.now()
     )
 
@@ -57,12 +59,12 @@ class Message(peewee.Model):
 class Salt(peewee.Model):
     salt = peewee.CharField(
         max_length=20,
-        default = tools.get_rand_value(20)
+        default=tools.get_rand_value(20)
     )
 
     user = peewee.ForeignKeyField(
         User,
-        backref = "salt",
+        backref="salt",
         unique=True
     )
 
@@ -73,6 +75,10 @@ class Salt(peewee.Model):
     class Meta:
         database = db
         table_name = "salt"
+
+    def __str__(self):
+        return f"{self.user.login}"
+
 
 if __name__ == '__main__':
     salt = Salt()
