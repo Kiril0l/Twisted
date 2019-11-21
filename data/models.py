@@ -18,7 +18,7 @@ class User(peewee.Model):
         default=datetime.now()
     )
 
-    def is_login(self, password):
+    def check_password(self, password):
         salt = Salt.get(user=self)
         hash_pass = tools.hash256(
             tools.str_to_sort_list(password, salt.value)
@@ -26,24 +26,21 @@ class User(peewee.Model):
         return self.hash_pass == hash_pass
 
     @__x.setter
-    def get_hash(self, value):
-        self.salt = Salt()
+    def password(self, value):
+        self.pass_salt = Salt()
         self.hash_pass = tools.hash256(
             tools.str_to_sort_list(value, self.pass_salt.value)
         )
 
-        def save(self):
-            record_id = super().save()
-            try:
-                self.pass_salt.user = self
-            except AttributeError:
-                pass
-            else:
-                self.pass_salt.save()
-            return record_id
-
-
-
+    def save(self):
+        record_id = super().save()
+        try:
+            self.pass_salt.user = self
+        except AttributeError:
+            pass
+        else:
+            self.pass_salt.save()
+        return record_id
 
     class Meta:
         database = db
