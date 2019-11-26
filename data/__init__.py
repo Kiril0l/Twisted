@@ -8,6 +8,7 @@ db = PostgresqlExtDatabase(
     password="1926734850"
 )
 from data import models
+
 db.connect()
-db.create_tables([models.User, models.Message, models.Chat, models.Salt])
+db.create_tables([models.User, models.Message, models.Chat, models.Salt, models.UsersChats])
 db.close()

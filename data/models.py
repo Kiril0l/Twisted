@@ -52,7 +52,10 @@ class Chat(peewee.Model):
         max_length=20,
         unique=True
     )
-    user = peewee.ForeignKeyField(
+    users = peewee.ManyToManyField(
+        User,
+    )
+    admin = peewee.ForeignKeyField(
         User,
         backref="chats"
     )
@@ -60,6 +63,9 @@ class Chat(peewee.Model):
     class Meta:
         database = db
         table_name = "chats"
+
+
+UsersChats = Chat.users.get_through_model()
 
 
 class Message(peewee.Model):

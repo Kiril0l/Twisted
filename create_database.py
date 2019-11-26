@@ -1,8 +1,9 @@
 from concurrent.futures import ProcessPoolExecutor
-from data.models import User
 import json
 import os
 import peewee
+from data import db
+from data.models import User, Chat
 
 
 def get_data():
@@ -15,10 +16,38 @@ def create_user(data):
     user.login = data.get("login")
     user.password = data.get("password")
     try:
-        user.save()
+        with db.atomic() as transaction:  # атомик - если все транзакции успешные, тогда сохр, а если нет, то ничего не сохр
+            try:
+                user.save()
+            except peewee.InternalError as e:
+                transaction.rollback()
+                print(e)
+                print("ERROR")
+            else:
+                transaction.commit()
+                print("COMMIT")
     except peewee.IntegrityError:
         print(f"{data.get('login')}: Already exist.")
     return user.id
+
+
+def create_default_chat():
+    try:
+        default_chat = Chat.get(name="default")
+    except Chat.DoesNotExist:
+        default_chat = Chat()
+        default_chat.name = "default"
+        default_chat.admin = User.get(login="admin")
+        default_chat.save()
+        users = User.select()
+        default_chat.users.add(users)
+        default_chat.save()
+    else:
+        users = User.select()
+        for user in users:
+            if user not in default_chat.users:
+                default_chat.users.add(user)
+        default_chat.save()
 
 
 if __name__ == "__main__":
@@ -29,3 +58,4 @@ if __name__ == "__main__":
     for element in ids:
         if element:
             print("User id:", element)
+    create_default_chat()

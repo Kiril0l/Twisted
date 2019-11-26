@@ -2,6 +2,8 @@ from twisted.internet.protocol import Factory
 from twisted.protocols.basic import LineReceiver
 from twisted.internet import reactor
 import json
+from data import models
+
 
 class Chat(LineReceiver):
 
@@ -10,23 +12,23 @@ class Chat(LineReceiver):
         self.name = None
         self.state = "GETNAME"
 
-    def connectionMade(self):    #метод вызывается 1 раз при установки соединени
+    def connectionMade(self):  # метод вызывается 1 раз при установки соединени
         data = {
             "status": "OK",
             "message": "What's your name?"
         }
         self.sendLine(json.dumps(data).encode("utf-8"))
 
-    def lineReceived(self, line):  #обрабатывает все поступившые данные
+    def lineReceived(self, line):  # обрабатывает все поступившые данные
         if self.state == "GETNAME":
-            self.handle_GETNAME(line.decode("utf-8"))
+            self.handle_AUTH(line.decode("utf-8"))
         else:
             self.handle_CHAT(line.decode("utf-8"))
 
-    def handle_GETNAME(self, line):
+    def handle_AUTH(self, line):
         data = json.loads(line)
-        print(data["login"], data["password"])
-        if data["login"] in self.users:
+        # print(data["login"], data["password"])
+        if data.get("login") in self.users:
             response = json.dumps(
                 {
                     "status": "ERROR",
@@ -35,19 +37,40 @@ class Chat(LineReceiver):
             )
             self.sendLine(response.encode("utf-8"))
             return
-        response = json.dumps(
-            {
-                "status": "OK",
-                "message": f"Welcome{data['login']}"
-            }
-        )
-        self.sendLine(response.encode("utf-8"))
-        self.name = data["login"]
-        self.users[data["login"]] = self
-        self.state = "CHAT"
+        try:
+            user = models.User.get(login=data.get("login"))
+        except models.User.DoesNotExist:
+            response = json.dumps(
+                {
+                    "status": "ERROR",
+                    "message": f"User {data.get('login')} not found,"
+                }
+            )
+            self.sendLine(response.encode("utf-8"))
+        else:
+            if user.chek_password(data.get("password")):
+                response = json.dumps(
+                    {
+                        "status": "OK",
+                        "message": f"Welcome{data['login']}"
+                    }
+                )
+            self.sendLine(response.encode("utf-8"))
+            self.name = data["login"]
+            self.users[data["login"]] = self
+            self.state = "CHAT"
+        else:
+            response = json.dumps(
+                {
+                    "status": "ERROR",
+                    "message": "Invalid password"
+                }
+            )
+            self.sendLine(response.encode("utf-8"))
 
-    def handle_CHAT(self, message):   #приходит строка и формируем ответ длявсех
-        data = json.dumps({"login": self.name, "message": message}) #из объекта делаем строку благодаря дамбс
+    def handle_CHAT(self, message):  # приходит строка и формируем ответ длявсех
+        # из объекта делаем строку благодаря дамбс
+        data = json.dumps({"login": self.name, "message": message})
         for name, protocol in self.users.items():
             if protocol != self:
                 protocol.sendLine(data.encode("utf-8"))
@@ -56,12 +79,13 @@ class Chat(LineReceiver):
         if self.name in self.users:
             del self.users[self.name]
 
+
 class ChatFactory(Factory):
 
     def __init__(self):
         self.users = {}
 
-    def buildProtocol(self, addr):  #создает соединение
+    def buildProtocol(self, addr):  # создает соединение
         return Chat(self.users)
 
 
