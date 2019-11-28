@@ -22,6 +22,7 @@ class Chat(LineReceiver):
     def lineReceived(self, line):  # обрабатывает все поступившые данные
         if self.state == "GETNAME":
             self.handle_AUTH(line.decode("utf-8"))
+            print(line.decode("utf-8"))
         else:
             self.handle_CHAT(line.decode("utf-8"))
 
@@ -48,25 +49,25 @@ class Chat(LineReceiver):
             )
             self.sendLine(response.encode("utf-8"))
         else:
-            if user.chek_password(data.get("password")):
+            if user.check_password(data.get("password")):
                 response = json.dumps(
                     {
                         "status": "OK",
-                        "message": f"Welcome{data['login']}"
+                        "message": f"Welcome {data['login']}"
                     }
                 )
-            self.sendLine(response.encode("utf-8"))
-            self.name = data["login"]
-            self.users[data["login"]] = self
-            self.state = "CHAT"
-        else:
-            response = json.dumps(
-                {
-                    "status": "ERROR",
-                    "message": "Invalid password"
-                }
-            )
-            self.sendLine(response.encode("utf-8"))
+                self.sendLine(response.encode("utf-8"))
+                self.name = data["login"]
+                self.users[data["login"]] = self
+                self.state = "CHAT"
+            else:
+                response = json.dumps(
+                    {
+                        "status": "ERROR",
+                        "message": "Invalid password"
+                    }
+                )
+                self.sendLine(response.encode("utf-8"))
 
     def handle_CHAT(self, message):  # приходит строка и формируем ответ длявсех
         # из объекта делаем строку благодаря дамбс

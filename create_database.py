@@ -16,7 +16,9 @@ def create_user(data):
     user.login = data.get("login")
     user.password = data.get("password")
     try:
-        with db.atomic() as transaction:  # атомик - если все транзакции успешные, тогда сохр, а если нет, то ничего не сохр
+        # атомик - если все транзакции успешные,
+        # тогда сохр, а если нет, то ничего не сохр
+        with db.atomic() as transaction:
             try:
                 user.save()
             except peewee.InternalError as e:
