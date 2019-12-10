@@ -70,11 +70,11 @@ class Chat(LineReceiver):
                 self.sendLine(response.encode("utf-8"))
 
     def handle_CHAT(self, message):  # приходит строка и формируем ответ длявсех
+        request = json.loads(message) #сохранение в бд
         # из объекта делаем строку благодаря дамбс
-        data = json.dumps({"login": self.name, "message": message})
         for name, protocol in self.users.items():
             if protocol != self:
-                protocol.sendLine(data.encode("utf-8"))
+                protocol.sendLine(message.encode("utf-8"))
 
     def connectionLost(self, reason):
         if self.name in self.users:
