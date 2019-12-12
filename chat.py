@@ -20,6 +20,7 @@ class Chat(LineReceiver):
         self.sendLine(json.dumps(data).encode("utf-8"))
 
     def lineReceived(self, line):  # обрабатывает все поступившые данные
+        print("MESSAGE", line.decode("utf-8"))
         if self.state == "GETNAME":
             self.handle_AUTH(line.decode("utf-8"))
             print(line.decode("utf-8"))
